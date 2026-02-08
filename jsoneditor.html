@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Editor Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #252526;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+
+        .logo span {
+            color: #ff9800;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: #2d2d2d;
+            padding: 8px 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .btn {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn.secondary {
+            background: #3c3c3c;
+        }
+
+        .btn.secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .btn.danger {
+            background: #c53030;
+        }
+
+        .btn.danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn.success {
+            background: #2f855a;
+        }
+
+        .btn.success:hover {
+            background: #38a169;
+        }
+
+        .separator {
+            width: 1px;
+            background: #3c3c3c;
+            margin: 0 5px;
+        }
+
+        /* Search bar */
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .search-input {
+            background: #3c3c3c;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            padding: 8px 12px;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 13px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+
+        /* Main container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+
+        /* Panel */
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3c3c3c;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            background: #2d2d2d;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        /* Code editor */
+        .code-editor {
+            width: 100%;
+            height: 100%;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 2;
+        }
+
+        /* Tree view */
+        .tree-view {
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .tree-node {
+            margin-left: 20px;
+        }
+
+        .tree-key {
+            color: #9cdcfe;
+        }
+
+        .tree-string {
+            color: #ce9178;
+        }
+
+        .tree-number {
+            color: #b5cea8;
+        }
+
+        .tree-boolean {
+            color: #569cd6;
+        }
+
+        .tree-null {
+            color: #569cd6;
+        }
+
+        .tree-bracket {
+            color: #ffd700;
+        }
+
+        .tree-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: inline-block;
+            width: 15px;
+            color: #888;
+        }
+
+        .tree-toggle:hover {
+            color: #fff;
+        }
+
+        .collapsible {
+            cursor: pointer;
+        }
+
+        .collapsed > .tree-node {
+            display: none;
+        }
+
+        .collapsed > .collapse-placeholder {
+            display: inline;
+        }
+
+        .collapse-placeholder {
+            display: none;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: #007acc;
+            color: white;
+            padding: 5px 15px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-bar.error {
+            background: #c53030;
+        }
+
+        .status-bar.success {
+            background: #2f855a;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .modal textarea {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Context menu */
+        .context-menu {
+            position: fixed;
+            background: #2d2d2d;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 5px 0;
+            min-width: 150px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .context-menu-item:hover {
+            background: #094771;
+        }
+
+        /* Resize handle */
+        .resize-handle {
+            width: 5px;
+            background: #3c3c3c;
+            cursor: col-resize;
+            transition: background 0.2s;
+        }
+
+        .resize-handle:hover {
+            background: #0e639c;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: #2d2d2d;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #0e639c;
+        }
+
+        .toast.success {
+            border-left-color: #2f855a;
+        }
+
+        .toast.error {
+            border-left-color: #c53030;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* File input */
+        .file-input {
+            display: none;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #252526;
+        }
+
+        .tab {
+            padding: 8px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+        }
+
+        .tab:hover {
+            background: #2d2d2d;
+        }
+
+        .tab.active {
+            border-bottom-color: #0e639c;
+            background: #1e1e1e;
+        }
+
+        /* Line numbers */
+        .editor-container {
+            display: flex;
+            height: 100%;
+        }
+
+        .line-numbers {
+            background: #1e1e1e;
+            color: #858585;
+            padding: 15px 10px;
+            text-align: right;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            user-select: none;
+            border-right: 1px solid #3c3c3c;
+            min-width: 50px;
+        }
+
+        /* Highlighted JSON */
+        .highlighted-json {
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .json-key { color: #9cdcfe; }
+        .json-string { color: #ce9178; }
+        .json-number { color: #b5cea8; }
+        .json-boolean { color: #569cd6; }
+        .json-null { color: #569cd6; }
+        .json-bracket { color: #ffd700; }
+        .json-colon { color: #d4d4d4; }
+        .json-comma { color: #d4d4d4; }
+
+        /* Path display */
+        .path-display {
+            background: #252526;
+            padding: 5px 15px;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid #3c3c3c;
+        }
+
+        .path-display code {
+            color: #4fc3f7;
+        }
+
+        /* Diff view */
+        .diff-added {
+            background: rgba(46, 160, 67, 0.2);
+        }
+
+        .diff-removed {
+            background: rgba(248, 81, 73, 0.2);
+        }
+
+        /* Schema validation indicator */
+        .validation-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .validation-indicator.valid {
+            background: #2f855a;
+        }
+
+        .validation-indicator.invalid {
+            background: #c53030;
+        }
+
+        .validation-indicator.pending {
+            background: #d69e2e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">JSON<span>Editor</span> Pro</div>
+        <div style="font-size: 12px; color: #888;">Local Edition v1.0</div>
+    </div>
+
+    <div class="toolbar">
+        <button class="btn" onclick="formatJSON()" title="Format JSON (Ctrl+Shift+F)">
+            ✨ Format
+        </button>
+        <button class="btn secondary" onclick="minifyJSON()" title="Minify JSON">
+            📦 Minify
+        </button>
+        <button class="btn secondary" onclick="validateJSON()" title="Validate JSON (Ctrl+Enter)">
+            ✓ Validate
+        </button>
+        <div class="separator"></div>
+        <button class="btn secondary" onclick="copyJSON()" title="Copy to clipboard">
+            📋 Copy
+        </button>
+        <button class="btn secondary" onclick="document.getElementById('fileInput').click()">
+            📂 Open
+        </button>
+        <button class="btn secondary" onclick="downloadJSON()" title="Download JSON file">
+            💾 Save
+        </button>
+        <div class="separator"></div>
+        <button class="btn secondary" onclick="sortKeys()" title="Sort object keys alphabetically">
+            🔤 Sort Keys
+        </button>
+        <button class="btn secondary" onclick="escapeJSON()">
+            🔒 Escape
+        </button>
+        <button class="btn secondary" onclick="unescapeJSON()">
+            🔓 Unescape
+        </button>
+        <div class="separator"></div>
+        <button class="btn secondary" onclick="convertToYAML()">
+            📄 → YAML
+        </button>
+        <button class="btn secondary" onclick="generateTypes()">
+            📝 → TypeScript
+        </button>
+        <div class="separator"></div>
+        <button class="btn danger" onclick="clearEditor()">
+            🗑️ Clear
+        </button>
+        <button class="btn success" onclick="loadSample()">
+            📑 Sample
+        </button>
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search in JSON..." onkeyup="searchInJSON(event)">
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input" accept=".json,.txt" onchange="loadFile(event)">
+
+    <div class="main-container">
+        <!-- Left Panel - Editor -->
+        <div class="panel" id="leftPanel" style="flex: 1;">
+            <div class="panel-header">
+                <span><span class="validation-indicator pending" id="validationIndicator"></span>JSON Input</span>
+                <span id="jsonStats" style="color: #888; font-weight: normal;"></span>
+            </div>
+            <div class="panel-content">
+                <div class="editor-container">
+                    <div class="line-numbers" id="lineNumbers">1</div>
+                    <textarea class="code-editor" id="jsonInput" spellcheck="false" placeholder="Paste your JSON here...">{
+  "name": "JSON Editor Pro",
+  "version": "1.0.0",
+  "features": [
+    "Syntax highlighting",
+    "Tree view",
+    "Format & Minify",
+    "Validation",
+    "Search",
+    "Import/Export"
+  ],
+  "settings": {
+    "theme": "dark",
+    "tabSize": 2,
+    "autoFormat": true
+  },
+  "author": {
+    "name": "Developer",
+    "email": "dev@example.com"
+  },
+  "active": true,
+  "count": 42
+}</textarea>
+                </div>
+            </div>
+            <div class="path-display">
+                Path: <code id="currentPath">$</code>
+            </div>
+        </div>
+
+        <div class="resize-handle" id="resizeHandle"></div>
+
+        <!-- Right Panel - Tree View / Formatted -->
+        <div class="panel" id="rightPanel" style="flex: 1;">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('tree')">🌳 Tree View</div>
+                <div class="tab" onclick="switchTab('formatted')">📄 Formatted</div>
+                <div class="tab" onclick="switchTab('table')">📊 Table</div>
+            </div>
+            <div class="panel-content" id="outputPanel">
+                <div id="treeView" class="tree-view"></div>
+                <div id="formattedView" class="highlighted-json" style="display: none;"></div>
+                <div id="tableView" style="display: none; padding: 15px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+        <span id="statusMessage">Ready</span>
+        <span id="cursorPosition">Ln 1, Col 1</span>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="copyPath()">Copy Path</div>
+        <div class="context-menu-item" onclick="copyValue()">Copy Value</div>
+        <div class="context-menu-item" onclick="expandAll()">Expand All</div>
+        <div class="context-menu-item" onclick="collapseAll()">Collapse All</div>
+    </div>
+
+    <!-- YAML Modal -->
+    <div class="modal-overlay" id="yamlModal">
+        <div class="modal">
+            <h3>YAML Output</h3>
+            <textarea id="yamlOutput" readonly></textarea>
+            <div class="modal-buttons">
+                <button class="btn secondary" onclick="copyYAML()">Copy</button>
+                <button class="btn" onclick="closeModal('yamlModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TypeScript Modal -->
+    <div class="modal-overlay" id="typesModal">
+        <div class="modal">
+            <h3>TypeScript Types</h3>
+            <textarea id="typesOutput" readonly></textarea>
+            <div class="modal-buttons">
+                <button class="btn secondary" onclick="copyTypes()">Copy</button>
+                <button class="btn" onclick="closeModal('typesModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentJSON = null;
+        let currentTab = 'tree';
+        let selectedPath = '$';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('jsonInput');
+            input.addEventListener('input', debounce(updatePreview, 300));
+            input.addEventListener('keydown', handleKeydown);
+            input.addEventListener('scroll', syncLineNumbers);
+            input.addEventListener('click', updateCursorPosition);
+            input.addEventListener('keyup', updateCursorPosition);
+            
+            // Initialize
+            updateLineNumbers();
+            updatePreview();
+            
+            // Resize functionality
+            initResize();
+            
+            // Context menu
+            document.addEventListener('click', () => {
+                document.getElementById('contextMenu').classList.remove('active');
+            });
+        });
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Update line numbers
+        function updateLineNumbers() {
+            const input = document.getElementById('jsonInput');
+            const lineNumbers = document.getElementById('lineNumbers');
+            const lines = input.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+        }
+
+        function syncLineNumbers() {
+            const input = document.getElementById('jsonInput');
+            const lineNumbers = document.getElementById('lineNumbers');
+            lineNumbers.scrollTop = input.scrollTop;
+        }
+
+        // Update cursor position
+        function updateCursorPosition() {
+            const input = document.getElementById('jsonInput');
+            const text = input.value.substring(0, input.selectionStart);
+            const lines = text.split('\n');
+            const line = lines.length;
+            const col = lines[lines.length - 1].length + 1;
+            document.getElementById('cursorPosition').textContent = `Ln ${line}, Col ${col}`;
+        }
+
+        // Handle keyboard shortcuts
+        function handleKeydown(e) {
+            // Tab key
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+                updateLineNumbers();
+            }
+            
+            // Ctrl+Shift+F - Format
+            if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+                e.preventDefault();
+                formatJSON();
+            }
+            
+            // Ctrl+Enter - Validate
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                validateJSON();
+            }
+            
+            // Ctrl+S - Save
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                downloadJSON();
+            }
+        }
+
+        // Update preview
+        function updatePreview() {
+            const input = document.getElementById('jsonInput').value;
+            updateLineNumbers();
+            
+            try {
+                currentJSON = JSON.parse(input);
+                setStatus('Valid JSON', 'success');
+                document.getElementById('validationIndicator').className = 'validation-indicator valid';
+                updateStats();
+                
+                if (currentTab === 'tree') {
+                    renderTree();
+                } else if (currentTab === 'formatted') {
+                    renderFormatted();
+                } else {
+                    renderTable();
+                }
+            } catch (e) {
+                setStatus(`Error: ${e.message}`, 'error');
+                document.getElementById('validationIndicator').className = 'validation-indicator invalid';
+                document.getElementById('jsonStats').textContent = '';
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const stats = getJSONStats(currentJSON);
+            document.getElementById('jsonStats').textContent = 
+                `${stats.keys} keys | ${stats.values} values | Depth: ${stats.depth}`;
+        }
+
+        function getJSONStats(obj, depth = 0) {
+            let keys = 0, values = 0, maxDepth = depth;
+            
+            if (Array.isArray(obj)) {
+                values += obj.length;
+                obj.forEach(item => {
+                    if (typeof item === 'object' && item !== null) {
+                        const sub = getJSONStats(item, depth + 1);
+                        keys += sub.keys;
+                        values += sub.values;
+                        maxDepth = Math.max(maxDepth, sub.depth);
+                    }
+                });
+            } else if (typeof obj === 'object' && obj !== null) {
+                const objKeys = Object.keys(obj);
+                keys += objKeys.length;
+                objKeys.forEach(key => {
+                    const val = obj[key];
+                    if (typeof val === 'object' && val !== null) {
+                        const sub = getJSONStats(val, depth + 1);
+                        keys += sub.keys;
+                        values += sub.values;
+                        maxDepth = Math.max(maxDepth, sub.depth);
+                    } else {
+                        values++;
+                    }
+                });
+            }
+            
+            return { keys, values, depth: maxDepth };
+        }
+
+        // Set status
+        function setStatus(message, type = '') {
+            const statusBar = document.getElementById('statusBar');
+            const statusMessage = document.getElementById('statusMessage');
+            statusBar.className = 'status-bar ' + type;
+            statusMessage.textContent = message;
+        }
+
+        // Show toast
+        function showToast(message, type = '') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Render tree view
+        function renderTree() {
+            const container = document.getElementById('treeView');
+            container.innerHTML = '';
+            container.appendChild(createTreeNode(currentJSON, '$'));
+        }
+
+        function createTreeNode(data, path, key = null) {
+            const wrapper = document.createElement('div');
+            
+            if (data === null) {
+                wrapper.innerHTML = `${key !== null ? `<span class="tree-key">"${escapeHtml(key)}"</span>: ` : ''}<span class="tree-null">null</span>`;
+                wrapper.dataset.path = path;
+                wrapper.onclick = (e) => { e.stopPropagation(); setPath(path); };
+                return wrapper;
+            }
+            
+            if (typeof data !== 'object') {
+                let valueClass = 'tree-string';
+                let displayValue = data;
+                
+                if (typeof data === 'number') {
+                    valueClass = 'tree-number';
+                } else if (typeof data === 'boolean') {
+                    valueClass = 'tree-boolean';
+                } else {
+                    displayValue = `"${escapeHtml(String(data))}"`;
+                }
+                
+                wrapper.innerHTML = `${key !== null ? `<span class="tree-key">"${escapeHtml(key)}"</span>: ` : ''}<span class="${valueClass}">${displayValue}</span>`;
+                wrapper.dataset.path = path;
+                wrapper.onclick = (e) => { e.stopPropagation(); setPath(path); };
+                return wrapper;
+            }
+            
+            const isArray = Array.isArray(data);
+            const keys = Object.keys(data);
+            const openBracket = isArray ? '[' : '{';
+            const closeBracket = isArray ? ']' : '}';
+            
+            wrapper.className = 'collapsible';
+            wrapper.dataset.path = path;
+            
+            const header = document.createElement('span');
+            header.innerHTML = `<span class="tree-toggle">▼</span>${key !== null ? `<span class="tree-key">"${escapeHtml(key)}"</span>: ` : ''}<span class="tree-bracket">${openBracket}</span>`;
+            header.onclick = (e) => {
+                e.stopPropagation();
+                wrapper.classList.toggle('collapsed');
+                const toggle = header.querySelector('.tree-toggle');
+                toggle.textContent = wrapper.classList.contains('collapsed') ? '▶' : '▼';
+                setPath(path);
+            };
+            
+            wrapper.appendChild(header);
+            
+            const placeholder = document.createElement('span');
+            placeholder.className = 'collapse-placeholder';
+            placeholder.textContent = `... ${keys.length} items`;
+            wrapper.appendChild(placeholder);
+            
+            keys.forEach((k, i) => {
+                const childPath = isArray ? `${path}[${k}]` : `${path}.${k}`;
+                const node = createTreeNode(data[k], childPath, isArray ? null : k);
+                node.className = 'tree-node';
+                if (i < keys.length - 1) {
+                    const comma = document.createElement('span');
+                    comma.textContent = ',';
+                    node.appendChild(comma);
+                }
+                wrapper.appendChild(node);
+            });
+            
+            const footer = document.createElement('span');
+            footer.className = 'tree-node';
+            footer.innerHTML = `<span class="tree-bracket">${closeBracket}</span>`;
+            wrapper.appendChild(footer);
+            
+            return wrapper;
+        }
+
+        function setPath(path) {
+            selectedPath = path;
+            document.getElementById('currentPath').textContent = path;
+        }
+
+        // Render formatted view with syntax highlighting
+        function renderFormatted() {
+            const container = document.getElementById('formattedView');
+            const formatted = JSON.stringify(currentJSON, null, 2);
+            container.innerHTML = highlightJSON(formatted);
+        }
+
+        function highlightJSON(json) {
+            return json
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, (match) => {
+                    if (/:$/.test(match)) {
+                        return `<span class="json-key">${match.slice(0, -1)}</span><span class="json-colon">:</span>`;
+                    }
+                    return `<span class="json-string">${match}</span>`;
+                })
+                .replace(/\b(true|false)\b/g, '<span class="json-boolean">$1</span>')
+                .replace(/\bnull\b/g, '<span class="json-null">null</span>')
+                .replace(/\b(-?\d+\.?\d*([eE][+-]?\d+)?)\b/g, '<span class="json-number">$1</span>')
+                .replace(/([{}\[\]])/g, '<span class="json-bracket">$1</span>');
+        }
+
+        // Render table view
+        function renderTable() {
+            const container = document.getElementById('tableView');
+            
+            if (Array.isArray(currentJSON) && currentJSON.length > 0 && typeof currentJSON[0] === 'object') {
+                const headers = [...new Set(currentJSON.flatMap(item => Object.keys(item || {})))];
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+                html += '<thead><tr style="background: #2d2d2d;">';
+                headers.forEach(h => {
+                    html += `<th style="padding: 10px; border: 1px solid #3c3c3c; text-align: left;">${escapeHtml(h)}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                currentJSON.forEach(item => {
+                    html += '<tr>';
+                    headers.forEach(h => {
+                        const val = item && item[h] !== undefined ? JSON.stringify(item[h]) : '';
+                        html += `<td style="padding: 10px; border: 1px solid #3c3c3c;">${escapeHtml(val)}</td>`;
+                    });
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="color: #888; padding: 20px;">Table view works best with arrays of objects.</p>';
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('treeView').style.display = tab === 'tree' ? 'block' : 'none';
+            document.getElementById('formattedView').style.display = tab === 'formatted' ? 'block' : 'none';
+            document.getElementById('tableView').style.display = tab === 'table' ? 'block' : 'none';
+            
+            if (currentJSON) {
+                if (tab === 'tree') renderTree();
+                else if (tab === 'formatted') renderFormatted();
+                else renderTable();
+            }
+        }
+
+        // Format JSON
+        function formatJSON() {
+            try {
+                const input = document.getElementById('jsonInput');
+                const parsed = JSON.parse(input.value);
+                input.value = JSON.stringify(parsed, null, 2);
+                updatePreview();
+                showToast('JSON formatted successfully', 'success');
+            } catch (e) {
+                showToast('Cannot format invalid JSON', 'error');
+            }
+        }
+
+        // Minify JSON
+        function minifyJSON() {
+            try {
+                const input = document.getElementById('jsonInput');
+                const parsed = JSON.parse(input.value);
+                input.value = JSON.stringify(parsed);
+                updatePreview();
+                showToast('JSON minified successfully', 'success');
+            } catch (e) {
+                showToast('Cannot minify invalid JSON', 'error');
+            }
+        }
+
+        // Validate JSON
+        function validateJSON() {
+            try {
+                JSON.parse(document.getElementById('jsonInput').value);
+                showToast('✓ Valid JSON!', 'success');
+            } catch (e) {
+                showToast(`✗ Invalid: ${e.message}`, 'error');
+            }
+        }
+
+        // Copy JSON
+        function copyJSON() {
+            navigator.clipboard.writeText(document.getElementById('jsonInput').value);
+            showToast('Copied to clipboard!', 'success');
+        }
+
+        // Download JSON
+        function downloadJSON() {
+            try {
+                const data = document.getElementById('jsonInput').value;
+                JSON.parse(data); // Validate first
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('File downloaded!', 'success');
+            } catch (e) {
+                showToast('Cannot save invalid JSON', 'error');
+            }
+        }
+
+        // Load file
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('jsonInput').value = e.target.result;
+                    updatePreview();
+                    showToast(`Loaded: ${file.name}`, 'success');
+                };
+                reader.readAsText(file);
+            }
+            event.target.value = '';
+        }
+
+        // Sort keys
+        function sortKeys() {
+            try {
+                const input = document.getElementById('jsonInput');
+                const parsed = JSON.parse(input.value);
+                input.value = JSON.stringify(sortObjectKeys(parsed), null, 2);
+                updatePreview();
+                showToast('Keys sorted alphabetically', 'success');
+            } catch (e) {
+                showToast('Cannot sort invalid JSON', 'error');
+            }
+        }
+
+        function sortObjectKeys(obj) {
+            if (Array.isArray(obj)) {
+                return obj.map(sortObjectKeys);
+            } else if (obj !== null && typeof obj === 'object') {
+                return Object.keys(obj)
+                    .sort()
+                    .reduce((acc, key) => {
+                        acc[key] = sortObjectKeys(obj[key]);
+                        return acc;
+                    }, {});
+            }
+            return obj;
+        }
+
+        // Escape/Unescape JSON
+        function escapeJSON() {
+            try {
+                const input = document.getElementById('jsonInput');
+                input.value = JSON.stringify(input.value);
+                updatePreview();
+                showToast('JSON escaped', 'success');
+            } catch (e) {
+                showToast('Error escaping JSON', 'error');
+            }
+        }
+
+        function unescapeJSON() {
+            try {
+                const input = document.getElementById('jsonInput');
+                input.value = JSON.parse(input.value);
+                updatePreview();
+                showToast('JSON unescaped', 'success');
+            } catch (e) {
+                showToast('Error unescaping JSON', 'error');
+            }
+        }
+
+        // Convert to YAML
+        function convertToYAML() {
+            if (!currentJSON) {
+                showToast('No valid JSON to convert', 'error');
+                return;
+            }
+            
+            const yaml = jsonToYAML(currentJSON);
+            document.getElementById('yamlOutput').value = yaml;
+            document.getElementById('yamlModal').classList.add('active');
+        }
+
+        function jsonToYAML(obj, indent = 0) {
+            const spaces = '  '.repeat(indent);
+            let result = '';
+            
+            if (Array.isArray(obj)) {
+                obj.forEach(item => {
+                    if (typeof item === 'object' && item !== null) {
+                        result += `${spaces}- \n${jsonToYAML(item, indent + 1)}`;
+                    } else {
+                        result += `${spaces}- ${formatYAMLValue(item)}\n`;
+                    }
+                });
+            } else if (typeof obj === 'object' && obj !== null) {
+                Object.entries(obj).forEach(([key, value]) => {
+                    if (typeof value === 'object' && value !== null) {
+                        result += `${spaces}${key}:\n${jsonToYAML(value, indent + 1)}`;
+                    } else {
+                        result += `${spaces}${key}: ${formatYAMLValue(value)}\n`;
+                    }
+                });
+            }
+            
+            return result;
+        }
+
+        function formatYAMLValue(value) {
+            if (value === null) return 'null';
+            if (typeof value === 'string') {
+                if (value.includes('\n') || value.includes(':') || value.includes('#')) {
+                    return `"${value.replace(/"/g, '\\"')}"`;
+                }
+                return value;
+            }
+            return String(value);
+        }
+
+        // Generate TypeScript types
+        function generateTypes() {
+            if (!currentJSON) {
+                showToast('No valid JSON to convert', 'error');
+                return;
+            }
+            
+            const types = generateTypeScript(currentJSON, 'RootObject');
+            document.getElementById('typesOutput').value = types;
+            document.getElementById('typesModal').classList.add('active');
+        }
+
+        function generateTypeScript(obj, name = 'Root') {
+            let result = '';
+            const interfaces = new Map();
+            
+            function getType(value, propName) {
+                if (value === null) return 'null';
+                if (Array.isArray(value)) {
+                    if (value.length === 0) return 'any[]';
+                    const itemType = getType(value[0], propName);
+                    return `${itemType}[]`;
+                }
+                if (typeof value === 'object') {
+                    const interfaceName = propName.charAt(0).toUpperCase() + propName.slice(1);
+                    generateInterface(value, interfaceName);
+                    return interfaceName;
+                }
+                return typeof value;
+            }
+            
+            function generateInterface(obj, name) {
+                if (interfaces.has(name)) return;
+                
+                let def = `interface ${name} {\n`;
+                Object.entries(obj).forEach(([key, value]) => {
+                    const type = getType(value, key);
+                    def += `  ${key}: ${type};\n`;
+                });
+                def += '}\n\n';
+                interfaces.set(name, def);
+            }
+            
+            generateInterface(obj, name);
+            
+            interfaces.forEach(def => {
+                result += def;
+            });
+            
+            return result;
+        }
+
+        // Modal functions
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function copyYAML() {
+            navigator.clipboard.writeText(document.getElementById('yamlOutput').value);
+            showToast('YAML copied!', 'success');
+        }
+
+        function copyTypes() {
+            navigator.clipboard.writeText(document.getElementById('typesOutput').value);
+            showToast('Types copied!', 'success');
+        }
+
+        // Clear editor
+        function clearEditor() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('treeView').innerHTML = '';
+            document.getElementById('formattedView').innerHTML = '';
+            document.getElementById('tableView').innerHTML = '';
+            currentJSON = null;
+            updateLineNumbers();
+            setStatus('Ready');
+            document.getElementById('validationIndicator').className = 'validation-indicator pending';
+            document.getElementById('jsonStats').textContent = '';
+            showToast('Editor cleared');
+        }
+
+        // Load sample
+        function loadSample() {
+            const sample = {
+                "company": "Acme Inc",
+                "employees": [
+                    {
+                        "id": 1,
+                        "name": "John Doe",
+                        "role": "Developer",
+                        "skills": ["JavaScript", "Python", "Go"],
+                        "active": true
+                    },
+                    {
+                        "id": 2,
+                        "name": "Jane Smith",
+                        "role": "Designer",
+                        "skills": ["Figma", "CSS", "Illustrator"],
+                        "active": true
+                    }
+                ],
+                "metadata": {
+                    "created": "2024-01-15",
+                    "version": 2.1,
+                    "tags": ["tech", "startup"]
+                },
+                "settings": {
+                    "notifications": true,
+                    "theme": "dark",
+                    "language": "en"
+                }
+            };
+            
+            document.getElementById('jsonInput').value = JSON.stringify(sample, null, 2);
+            updatePreview();
+            showToast('Sample data loaded', 'success');
+        }
+
+        // Search in JSON
+        function searchInJSON(event) {
+            const query = event.target.value.toLowerCase();
+            if (!query) {
+                renderTree();
+                return;
+            }
+            
+            const highlighted = highlightSearch(currentJSON, query);
+            // Simple search highlight - could be enhanced
+        }
+
+        function highlightSearch(obj, query) {
+            // Implementation for search highlighting
+        }
+
+        // Expand/Collapse all
+        function expandAll() {
+            document.querySelectorAll('.collapsible').forEach(el => {
+                el.classList.remove('collapsed');
+                const toggle = el.querySelector('.tree-toggle');
+                if (toggle) toggle.textContent = '▼';
+            });
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.collapsible').forEach(el => {
+                el.classList.add('collapsed');
+                const toggle = el.querySelector('.tree-toggle');
+                if (toggle) toggle.textContent = '▶';
+            });
+        }
+
+        // Resize panels
+        function initResize() {
+            const handle = document.getElementById('resizeHandle');
+            const leftPanel = document.getElementById('leftPanel');
+            const rightPanel = document.getElementById('rightPanel');
+            let isResizing = false;
+            
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const container = document.querySelector('.main-container');
+                const containerRect = container.getBoundingClientRect();
+                const percentage = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+                
+                if (percentage > 20 && percentage < 80) {
+                    leftPanel.style.flex = `0 0 ${percentage}%`;
+                    rightPanel.style.flex = `0 0 ${100 - percentage}%`;
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Copy path/value from context menu
+        function copyPath() {
+            navigator.clipboard.writeText(selectedPath);
+            showToast('Path copied!', 'success');
+        }
+
+        function copyValue() {
+            // Get value at current path
+            if (currentJSON && selectedPath) {
+                try {
+                    const pathParts = selectedPath.replace(/^\$\.?/, '').split(/\.|\[|\]/).filter(Boolean);
+                    let value = currentJSON;
+                    pathParts.forEach(part => {
+                        value = value[part];
+                    });
+                    navigator.clipboard.writeText(JSON.stringify(value, null, 2));
+                    showToast('Value copied!', 'success');
+                } catch (e) {
+                    showToast('Could not copy value', 'error');
+                }
+            }
+        }
+
+        // Drag and drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('jsonInput').value = event.target.result;
+                    updatePreview();
+                    showToast(`Loaded: ${file.name}`, 'success');
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>

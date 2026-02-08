@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Quality Tweet Generator</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #000000;
+            --text-main: #ffffff;
+            --text-sec: #71767b;
+            --border: #2f3336;
+            --twitter-blue: #1d9bf0;
+            --input-bg: #192734;
+            --input-border: #38444d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #15202b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            min-height: 100vh;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Controls Section */
+        .controls {
+            background: #192734;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        h2 { margin-top: 0; font-size: 1.2rem; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-size: 0.85rem; font-weight: 600; color: var(--text-sec); margin-bottom: 5px; }
+        
+        input[type="text"], textarea, input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        /* Slider Styling */
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--twitter-blue);
+            cursor: pointer;
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--twitter-blue); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--twitter-blue); color: var(--twitter-blue); }
+        button:hover { opacity: 0.9; }
+
+        /* Preview Section */
+        .preview-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tweet-card {
+            background-color: var(--card-bg);
+            width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Header */
+        .tweet-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .header-left { display: flex; gap: 12px; align-items: center; }
+        
+        /* --- THE FIX: MASK CONTAINER + REAL IMG --- */
+        .pfp-mask {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden; /* Cuts off the square corners of the image */
+            flex-shrink: 0;
+            background: #333;
+            position: relative;
+        }
+
+        .pfp-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures image fills the circle without squashing */
+            object-position: center;
+            display: block;
+        }
+
+        .user-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+        .name-row { display: flex; align-items: center; gap: 4px; }
+        .name { font-weight: 700; font-size: 16px; color: var(--text-main); }
+        .username { color: var(--text-sec); font-size: 15px; margin-top: 2px; }
+        
+        .verified-icon { width: 18px; height: 18px; fill: var(--twitter-blue); }
+        .more-icon { width: 20px; height: 20px; fill: var(--text-sec); }
+
+        /* Tweet Body */
+        .tweet-text {
+            font-size: 23px; /* Default size */
+            line-height: 1.35;
+            margin: 16px 0;
+            white-space: pre-wrap;
+            color: var(--text-main);
+        }
+
+        /* Meta & Stats */
+        .tweet-meta { color: var(--text-sec); font-size: 15px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+        .dot-sep { margin: 0 4px; }
+        .views-count { color: var(--text-main); font-weight: 700; }
+
+        /* Footer Actions */
+        .tweet-footer { display: flex; justify-content: space-between; padding: 0 4px; color: var(--text-sec); }
+        .action-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .action-icon { width: 20px; height: 20px; fill: var(--text-sec); }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h2>Tweet Settings</h2>
+        
+        <label>Profile Picture</label>
+        <input type="file" id="imgInput" accept="image/*">
+
+        <label>Name</label>
+        <input type="text" id="nameInput" value="Ali Alfredji">
+
+        <label>Username</label>
+        <input type="text" id="userInput" value="alialfredji">
+
+        <label>Tweet Text</label>
+        <textarea id="textInput" rows="5">Before AI coding agents, I'd constantly have 2 or 3 side-projects that I would struggle to finish
+
+AI completely changed the game
+
+Now I have 15-20 unfinished side-projects</textarea>
+
+        <label>Text Size: <span id="sizeValue">23px</span></label>
+        <input type="range" id="textSizeSlider" min="16" max="40" value="23">
+
+        <label>Date String</label>
+        <input type="text" id="dateInput" placeholder="7:30 PM · Jan 15, 2026">
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        
+        <button class="btn-outline" onclick="randomizeMetrics()" style="width:100%; margin-bottom: 15px;">🎲 Randomize Numbers</button>
+
+        <label>Views</label>
+        <input type="number" id="viewsInput" value="431100">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+                <label>Replies</label>
+                <input type="number" id="repliesInput" value="263">
+            </div>
+            <div>
+                <label>Reposts</label>
+                <input type="number" id="retweetsInput" value="1200">
+            </div>
+            <div>
+                <label>Likes</label>
+                <input type="number" id="likesInput" value="14000">
+            </div>
+            <div>
+                <label>Bookmarks</label>
+                <input type="number" id="bookmarksInput" value="566">
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="downloadTweet()">Download HD Image</button>
+        </div>
+    </div>
+
+    <div class="preview-container">
+        <div id="tweetCapture" class="tweet-card">
+            
+            <div class="tweet-header">
+                <div class="header-left">
+                    <div class="pfp-mask">
+                        <img src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" id="pfpDisplay" class="pfp-img" alt="Profile">
+                    </div>
+                    
+                    <div class="user-info">
+                        <div class="name-row">
+                            <span id="nameDisplay" class="name">Ali Alfredji</span>
+                            <svg viewBox="0 0 22 22" class="verified-icon"><g><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568-.54.355-.975.853-1.247 1.44-.605-.223-1.262-.27-1.896-.14-.633.13-1.216.437-1.687.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.44 1.245-.356.54-.555 1.17-.574 1.817.02.647.215 1.276.574 1.817.356.54.856.972 1.44 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.687.47.443 1.054.753 1.687.883.634.132 1.29.084 1.896-.14.274.586.705 1.084 1.246 1.439.54.354 1.167.55 1.814.568.647-.018 1.275-.214 1.815-.568.539-.355.97-.853 1.244-1.439.606.223 1.262.273 1.896.14.633-.13 1.218-.44 1.687-.883.445-.47.752-1.054.882-1.687.13-.634.083-1.29-.14-1.896.586-.273 1.084-.704 1.439-1.245.354-.54.55-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"></path></g></svg>
+                        </div>
+                        <div class="username">@<span id="userDisplay">alialfredji</span></div>
+                    </div>
+                </div>
+                <svg viewBox="0 0 24 24" class="more-icon"><g><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path></g></svg>
+            </div>
+
+            <div class="tweet-text" id="textDisplay">Before AI coding agents, I'd constantly have 2 or 3 side-projects that I would struggle to finish
+
+AI completely changed the game
+
+Now I have 15-20 unfinished side-projects</div>
+
+            <div class="tweet-meta">
+                <span id="timeDisplay">7:30 PM</span> <span class="dot-sep">·</span> <span id="dateDisplay">Jan 15, 2026</span> <span class="dot-sep">·</span> <span class="views-count"><span id="viewsDisplay">431.1K</span> Views</span>
+            </div>
+
+            <div class="tweet-footer">
+                <div class="action-item">
+                    <svg class="action-icon" viewBox="0 0 24 24"><g><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"></path></g></svg>
+                    <span id="repliesDisplay">263</span>
+                </div>
+                <div class="action-item">
+                    <svg class="action-icon" viewBox="0 0 24 24"><g><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"></path></g></svg>
+                    <span id="retweetsDisplay">1.2K</span>
+                </div>
+                <div class="action-item">
+                    <svg class="action-icon" viewBox="0 0 24 24"><g><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.511-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"></path></g></svg>
+                    <span id="likesDisplay">14K</span>
+                </div>
+                <div class="action-item">
+                    <svg class="action-icon" viewBox="0 0 24 24"><g><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"></path></g></svg>
+                    <span id="bookmarksDisplay">566</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Elements ---
+        const inputs = {
+            name: document.getElementById('nameInput'),
+            user: document.getElementById('userInput'),
+            text: document.getElementById('textInput'),
+            textSize: document.getElementById('textSizeSlider'), // Slider
+            date: document.getElementById('dateInput'),
+            views: document.getElementById('viewsInput'),
+            replies: document.getElementById('repliesInput'),
+            retweets: document.getElementById('retweetsInput'),
+            likes: document.getElementById('likesInput'),
+            bookmarks: document.getElementById('bookmarksInput')
+        };
+
+        const displays = {
+            name: document.getElementById('nameDisplay'),
+            user: document.getElementById('userDisplay'),
+            text: document.getElementById('textDisplay'),
+            sizeVal: document.getElementById('sizeValue'),
+            time: document.getElementById('timeDisplay'),
+            date: document.getElementById('dateDisplay'),
+            views: document.getElementById('viewsDisplay'),
+            replies: document.getElementById('repliesDisplay'),
+            retweets: document.getElementById('retweetsDisplay'),
+            likes: document.getElementById('likesDisplay'),
+            bookmarks: document.getElementById('bookmarksDisplay'),
+            pfp: document.getElementById('pfpDisplay') // Reverted to IMG
+        };
+
+        const tweetCard = document.getElementById('tweetCapture');
+
+        // --- Init ---
+        window.onload = function() {
+            displays.time.innerText = "7:30 PM";
+            displays.date.innerText = "Jan 15, 2026";
+            inputs.date.value = "7:30 PM · Jan 15, 2026";
+            formatAllNumbers();
+        };
+
+        // --- Event Listeners ---
+        Object.keys(inputs).forEach(key => {
+            inputs[key].addEventListener('input', (e) => {
+                const val = inputs[key].value;
+                
+                // Specific Logic for Date
+                if(key === 'date') {
+                    if(val.includes('·')) {
+                        const parts = val.split('·');
+                        if(parts[0]) displays.time.innerText = parts[0].trim();
+                        if(parts[1]) displays.date.innerText = parts[1].trim();
+                    } else {
+                        displays.time.innerText = val;
+                        displays.date.innerText = "";
+                    }
+                    return;
+                }
+
+                // Specific Logic for Slider
+                if(key === 'textSize') {
+                    displays.text.style.fontSize = val + 'px';
+                    displays.sizeVal.innerText = val + 'px';
+                    return;
+                }
+
+                // Number Formatting
+                if(['views','replies','retweets','likes','bookmarks'].includes(key)) {
+                    displays[key].innerText = formatNumber(val);
+                } else {
+                    displays[key].innerText = val;
+                }
+            });
+        });
+
+        // --- Image Upload (Reverted to standard IMG src) ---
+        document.getElementById('imgInput').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    displays.pfp.src = e.target.result;
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // --- Utils ---
+        function formatNumber(num) {
+            num = parseInt(num);
+            if (isNaN(num)) return "0";
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace('.0','') + 'K';
+            return num.toLocaleString(); 
+        }
+
+        function formatAllNumbers() {
+            ['views','replies','retweets','likes','bookmarks'].forEach(key => {
+                displays[key].innerText = formatNumber(inputs[key].value);
+            });
+        }
+
+        function randomizeMetrics() {
+            const views = Math.floor(Math.random() * (500000 - 10000 + 1) + 10000);
+            inputs.views.value = views;
+            inputs.replies.value = Math.floor(views * 0.0005);
+            inputs.retweets.value = Math.floor(views * 0.003);
+            inputs.likes.value = Math.floor(views * 0.03);
+            inputs.bookmarks.value = Math.floor(views * 0.001);
+            formatAllNumbers();
+        }
+
+        // --- Download ---
+        function downloadTweet() {
+            html2canvas(tweetCard, {
+                backgroundColor: "#000000",
+                scale: 4, 
+                useCORS: true, 
+                allowTaint: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'tweet-hd.png';
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Blur Tool</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-light: #64748b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-light);
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
+        /* Container */
+        .app-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            width: 100%;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #fcfcfc;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+
+        .upload-zone p {
+            margin: 0;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Workspace (Canvas & Controls) */
+        .workspace {
+            display: none; /* Hidden by default */
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            max-width: 100%;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            /* Cursor indicates painting */
+            cursor: crosshair; 
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Controls Toolbar */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        input[type="range"] {
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.1s;
+        }
+
+        .btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        /* Loading indicator */
+        .loading {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Redact & Blur</h1>
+    <p class="subtitle">Securely blur sensitive text on your images locally.</p>
+
+    <div class="app-container">
+        
+        <div class="upload-zone" id="dropZone">
+            <p>Click to upload or drag image here</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="workspace" id="workspace">
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="brushSize">Brush Size</label>
+                    <input type="range" id="brushSize" min="10" max="100" value="30">
+                </div>
+                
+                <div class="control-group">
+                    <label for="blurStrength">Blur Strength</label>
+                    <input type="range" id="blurStrength" min="2" max="20" value="8">
+                </div>
+            </div>
+
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+
+            <div class="action-row">
+                <button class="btn" id="undoBtn">Undo</button>
+                <button class="btn" id="resetBtn">Reset</button>
+                <button class="btn btn-primary" id="downloadBtn">Download Image</button>
+            </div>
+            
+            <div class="loading" id="loadingText">Processing...</div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const workspace = document.getElementById('workspace');
+        const mainCanvas = document.getElementById('mainCanvas');
+        const ctx = mainCanvas.getContext('2d');
+        const brushSizeInput = document.getElementById('brushSize');
+        const blurStrengthInput = document.getElementById('blurStrength');
+        const undoBtn = document.getElementById('undoBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        // State variables
+        let originalImage = null;
+        let blurredCanvas = null; // Holds the fully blurred version of the image
+        let isDrawing = false;
+        let history = []; // Undo history
+        const maxHistory = 10;
+
+        // --- Event Listeners ---
+
+        // File Upload
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drawing Controls
+        brushSizeInput.addEventListener('input', () => {
+            // Optional: Show brush cursor size preview logic could go here
+        });
+
+        // If blur strength changes, we must regenerate the "blurred source"
+        blurStrengthInput.addEventListener('change', () => {
+            if (originalImage) {
+                generateBlurredSource();
+            }
+        });
+
+        // Canvas Drawing Events
+        mainCanvas.addEventListener('mousedown', startDrawing);
+        mainCanvas.addEventListener('mousemove', draw);
+        mainCanvas.addEventListener('mouseup', stopDrawing);
+        mainCanvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch support
+        mainCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousedown", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            mainCanvas.dispatchEvent(mouseEvent);
+        });
+
+        mainCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousemove", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            mainCanvas.dispatchEvent(mouseEvent);
+        });
+
+        mainCanvas.addEventListener('touchend', stopDrawing);
+
+        // Buttons
+        undoBtn.addEventListener('click', undo);
+        resetBtn.addEventListener('click', resetCanvas);
+        downloadBtn.addEventListener('click', downloadImage);
+
+        // --- Core Functions ---
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    initEditor();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function initEditor() {
+            // Hide upload, show workspace
+            dropZone.style.display = 'none';
+            workspace.style.display = 'flex';
+
+            // Set canvas size to match image
+            // We limit max width for performance/display, but keep resolution
+            mainCanvas.width = originalImage.width;
+            mainCanvas.height = originalImage.height;
+
+            // Draw original image
+            ctx.drawImage(originalImage, 0, 0);
+
+            // Generate the reference blurred image
+            generateBlurredSource();
+
+            // Clear history
+            history = [];
+        }
+
+        function generateBlurredSource() {
+            // Create an off-screen canvas that holds the *entire* image blurred.
+            // When we paint, we are revealing this canvas.
+            blurredCanvas = document.createElement('canvas');
+            blurredCanvas.width = originalImage.width;
+            blurredCanvas.height = originalImage.height;
+            const bCtx = blurredCanvas.getContext('2d');
+
+            // Apply filter
+            // Note: Canvas filters work in modern browsers. 
+            // We scale blur by image size so it looks consistent on large/small imgs.
+            const blurVal = blurStrengthInput.value;
+            bCtx.filter = `blur(${blurVal}px)`;
+            
+            // Draw the image with the blur filter
+            bCtx.drawImage(originalImage, 0, 0);
+        }
+
+        // --- Drawing Logic ---
+
+        function startDrawing(e) {
+            isDrawing = true;
+            saveState(); // Save current state before modifying
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            // Get mouse position relative to canvas
+            const rect = mainCanvas.getBoundingClientRect();
+            
+            // Calculate scale factors (css size vs actual pixel size)
+            const scaleX = mainCanvas.width / rect.width;
+            const scaleY = mainCanvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            const brushSize = parseInt(brushSizeInput.value) * scaleX; // Scale brush too
+
+            // To blur, we copy a circular patch from the blurredCanvas to the mainCanvas
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+            ctx.clip();
+            // Draw the pre-blurred image onto the visible canvas, constrained by the clip
+            ctx.drawImage(blurredCanvas, 0, 0);
+            ctx.restore();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // --- History & Actions ---
+
+        function saveState() {
+            // Keep last N states
+            if (history.length >= maxHistory) {
+                history.shift();
+            }
+            history.push(mainCanvas.toDataURL());
+        }
+
+        function undo() {
+            if (history.length === 0) return;
+            const prevState = history.pop();
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = prevState;
+        }
+
+        function resetCanvas() {
+            if(confirm("Reset all changes?")) {
+                ctx.drawImage(originalImage, 0, 0);
+                history = [];
+            }
+        }
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'blurred-image.png';
+            link.href = mainCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+    </script>
+</body>
+</html>

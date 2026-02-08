@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured PDF to MD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --radius: 8px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+        .logo span { color: var(--primary); }
+        .badge { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+
+        /* Main Grid */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fafafa;
+        }
+
+        .upload-box:hover, .upload-box.active {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .icon-upload { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+        .hint { font-size: 0.85rem; color: var(--text-light); }
+        
+        .file-meta {
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+            display: none;
+        }
+        .file-meta.show { display: block; }
+        .meta-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+
+        /* Editor */
+        .editor-container {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .actions { display: flex; gap: 0.5rem; }
+
+        button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text);
+            transition: 0.1s;
+        }
+
+        button:hover { background: #f9fafb; border-color: #d1d5db; }
+        
+        button.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        button.primary:hover { background: var(--primary-hover); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        textarea {
+            flex: 1;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+        
+        textarea:focus { border-color: var(--primary); ring: 2px solid #bfdbfe; }
+
+        /* Overlay */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 50;
+            opacity: 0; pointer-events: none;
+            transition: 0.3s;
+        }
+        .overlay.visible { opacity: 1; pointer-events: all; }
+        
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Struct<span>PDF</span> <div class="badge">AI Ready</div></div>
+    <a href="#" style="color: var(--text-light); text-decoration: none; font-size: 0.9rem;">Simple Tool</a>
+</nav>
+
+<main>
+    <div class="sidebar">
+        <div class="upload-box" id="dropZone">
+            <span class="icon-upload">📥</span>
+            <strong>Upload PDF</strong>
+            <p class="hint">Drag & drop or click</p>
+            <input type="file" id="fileInput" accept="application/pdf" hidden>
+        </div>
+
+        <div class="file-meta" id="fileMeta">
+            <div class="meta-row"><strong>Name:</strong> <span id="metaName">-</span></div>
+            <div class="meta-row"><strong>Pages:</strong> <span id="metaPages">-</span></div>
+            <div class="meta-row"><strong>Base Font:</strong> <span id="metaFont">-</span></div>
+        </div>
+
+        <div style="margin-top: auto; font-size: 0.8rem; color: var(--text-light);">
+            <p><strong>How it works:</strong><br>
+            We analyze font sizes to detect Headers (#) vs Paragraphs. We also attempt to merge split lines.</p>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <div class="toolbar">
+            <h3>Markdown Output</h3>
+            <div class="actions">
+                <button id="copyBtn" disabled>Copy Text</button>
+                <button id="dlBtn" class="primary" disabled>Download .MD</button>
+            </div>
+        </div>
+        <textarea id="output" placeholder="Structured Markdown will appear here..."></textarea>
+    </div>
+</main>
+
+<div class="overlay" id="loader">
+    <div class="spinner"></div>
+    <p style="margin-top: 1rem; font-weight: 500;">Analyzing Layout & Structure...</p>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const output = document.getElementById('output');
+    const loader = document.getElementById('loader');
+    
+    // UI Logic
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('active');
+        if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    async function handleFile(file) {
+        if(file.type !== 'application/pdf') return alert('PDFs only please!');
+        
+        loader.classList.add('visible');
+        document.getElementById('metaName').innerText = file.name;
+        document.getElementById('fileMeta').classList.add('show');
+
+        try {
+            const buf = await file.arrayBuffer();
+            const doc = await pdfjsLib.getDocument(buf).promise;
+            document.getElementById('metaPages').innerText = doc.numPages;
+
+            let fullMarkdown = "";
+
+            for(let i=1; i<=doc.numPages; i++) {
+                const page = await doc.getPage(i);
+                const content = await page.getTextContent();
+                
+                // 1. Structure Analysis
+                const structuredPage = await convertPageToMarkdown(content);
+                
+                fullMarkdown += structuredPage + "\n\n";
+            }
+
+            output.value = fullMarkdown.trim();
+            document.getElementById('copyBtn').disabled = false;
+            document.getElementById('dlBtn').disabled = false;
+
+        } catch (e) {
+            console.error(e);
+            alert('Error parsing PDF.');
+        } finally {
+            loader.classList.remove('visible');
+        }
+    }
+
+    // --- The Core Logic: Structure Detection ---
+
+    async function convertPageToMarkdown(textContent) {
+        const items = textContent.items;
+        if (items.length === 0) return "";
+
+        // 1. Identify the "Body Text" font size (Mode)
+        const heightCounts = {};
+        items.forEach(item => {
+            const h = Math.round(item.height);
+            if(h > 0) heightCounts[h] = (heightCounts[h] || 0) + 1;
+        });
+        
+        // Find most frequent height
+        const bodyHeight = Object.keys(heightCounts).reduce((a, b) => heightCounts[a] > heightCounts[b] ? a : b);
+        document.getElementById('metaFont').innerText = bodyHeight + "px";
+
+        // 2. Group items by Line (Y position)
+        // PDF coordinates are bottom-left (Y grows upwards). We flip to top-down for logic.
+        // We allow a small tolerance (2px) to group items on roughly the same line.
+        const lines = {};
+        items.forEach(item => {
+            const y = Math.round(item.transform[5] / 4) * 4; // Quantize Y to group near-lines
+            if(!lines[y]) lines[y] = [];
+            lines[y].push(item);
+        });
+
+        // Sort lines from Top to Bottom (PDF Y is inverted usually)
+        const sortedY = Object.keys(lines).sort((a,b) => b - a);
+
+        let markdown = "";
+
+        sortedY.forEach((y, index) => {
+            const lineItems = lines[y];
+            // Sort items in line from Left to Right
+            lineItems.sort((a,b) => a.transform[4] - b.transform[4]);
+
+            // Construct the line string
+            let lineText = lineItems.map(i => i.str).join("");
+            
+            // Check for Empty Lines
+            if (!lineText.trim()) return;
+
+            // Determine Line Max Height (to detect headers)
+            const maxLineHeight = Math.max(...lineItems.map(i => i.height));
+
+            // --- HEADER DETECTION LOGIC ---
+            // If line is significantly bigger than body text -> Header
+            let prefix = "";
+            if (maxLineHeight > bodyHeight * 1.8) {
+                prefix = "# "; // H1
+            } else if (maxLineHeight > bodyHeight * 1.4) {
+                prefix = "## "; // H2
+            } else if (maxLineHeight > bodyHeight * 1.15) {
+                prefix = "### "; // H3
+            } else {
+                // If it's bold logic (Optional refinement)
+                // Note: fontName is often scrambled in PDF.js, so strict bold detection 
+                // is unreliable without heavyweight parsing. 
+                // We rely on structure (headers) as requested.
+            }
+
+            // --- PARAGRAPH MERGING LOGIC ---
+            // If the previous line didn't end with punctuation, and this line is body text,
+            // we probably want to merge them (remove the newline) to fix "Hard Wrapping".
+            
+            if (prefix === "") {
+                // It's a paragraph line.
+                // Does it look like a list item?
+                if (lineText.trim().match(/^[•\-\*]\s/)) {
+                    // It is a list, keep the newline
+                    markdown += "\n" + lineText.trim();
+                } else {
+                    // Standard text
+                    markdown += lineText + " "; // Add space for wrapping
+                }
+            } else {
+                // It is a header, force newlines around it
+                markdown += "\n\n" + prefix + lineText.trim() + "\n\n";
+            }
+        });
+
+        // Cleanup: remove multiple spaces and excessive newlines
+        return markdown.replace(/  +/g, ' ').replace(/\n\s+\n/g, '\n\n');
+    }
+
+    // Export Tools
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        output.select();
+        document.execCommand('copy');
+        alert('Copied to clipboard!');
+    });
+
+    document.getElementById('dlBtn').addEventListener('click', () => {
+        const blob = new Blob([output.value], {type: 'text/markdown'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (document.getElementById('metaName').innerText || 'doc') + '.md';
+        a.click();
+    });
+
+</script>
+</body>
+</html>
