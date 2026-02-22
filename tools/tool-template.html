@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Tool Name</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Shared design system (required, in this order) -->
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/components.css" />
+
+  <style>
+    /* Tool-specific layout only — never redefine tokens here.
+       Use @layer overrides { } to change shared component appearance. */
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Main content area */
+    #main {
+      flex: 1;
+      padding: var(--space-6);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top toolbar -->
+  <nav class="toolbar">
+    <span style="font-weight:600;font-size:13px;">Tool Name</span>
+    <div style="flex:1"></div>
+    <button class="btn btn--sm btn--outline" id="btn-action">Action</button>
+  </nav>
+
+  <!-- Main content -->
+  <main id="main">
+    <div class="container">
+
+      <!-- Example two-pane layout -->
+      <div class="split-layout">
+
+        <!-- Input panel -->
+        <div class="panel">
+          <div class="panel__header">
+            <h3 class="panel__title">Input</h3>
+          </div>
+          <div class="panel__body">
+            <div class="form-group">
+              <label class="label" for="input-field">Field label</label>
+              <textarea class="input" id="input-field" rows="8" placeholder="Paste content here…"></textarea>
+            </div>
+            <button class="btn" id="btn-process">Process</button>
+          </div>
+        </div>
+
+        <!-- Output panel -->
+        <div class="panel">
+          <div class="panel__header">
+            <h3 class="panel__title">Output</h3>
+            <button class="btn btn--ghost btn--sm" id="btn-copy">Copy</button>
+          </div>
+          <div class="panel__body">
+            <div class="code-block">
+              <div class="code-block__header">
+                <span class="code-block__lang">text</span>
+              </div>
+              <pre><code id="output">Results appear here.</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.split-layout -->
+
+    </div><!-- /.container -->
+  </main>
+
+</div><!-- /#app -->
+
+<script>
+(() => {
+  'use strict';
+
+  // ── DOM refs ────────────────────────────────────────────────────────────────
+  const inputField  = document.getElementById('input-field');
+  const btnProcess  = document.getElementById('btn-process');
+  const btnCopy     = document.getElementById('btn-copy');
+  const output      = document.getElementById('output');
+
+  // ── Core logic ──────────────────────────────────────────────────────────────
+  function process() {
+    const raw = inputField.value.trim();
+    if (!raw) return;
+    // TODO: implement tool logic
+    output.textContent = raw;
+  }
+
+  async function copyOutput() {
+    try {
+      await navigator.clipboard.writeText(output.textContent);
+      const orig = btnCopy.textContent;
+      btnCopy.textContent = 'Copied!';
+      setTimeout(() => { btnCopy.textContent = orig; }, 1500);
+    } catch { /* silent */ }
+  }
+
+  // ── Events ──────────────────────────────────────────────────────────────────
+  btnProcess.addEventListener('click', process);
+  btnCopy.addEventListener('click', copyOutput);
+
+})();
+</script>
+</body>
+</html>

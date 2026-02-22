@@ -3,82 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
     <title>Markdown Merger with File Pool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/tokens.css">
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="../shared/components.css">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #cbd5e1;
-            --danger-color: #ef4444;
-        }
-
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
             display: flex;
             justify-content: center;
             padding: 40px 20px;
-            margin: 0;
         }
 
         .container {
-            background: var(--card-bg);
+            background: var(--color-bg-panel);
             width: 100%;
             max-width: 650px;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border-color);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--color-border);
         }
 
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
+            font-weight: 600;
             margin-bottom: 20px;
-            border-bottom: 2px solid var(--border-color);
+            border-bottom: 1px solid var(--color-border);
             padding-bottom: 10px;
+            color: var(--color-text);
         }
 
         .input-group {
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        /* Standard inputs */
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-
-        input[type="file"] {
-            background: #f1f5f9;
-            cursor: pointer;
-        }
-
-        .helper-text {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-top: 5px;
-        }
-
-        /* --- THE FILE POOL STYLES --- */
+        /* File pool */
         .file-pool-container {
-            border: 1px solid var(--border-color);
-            background-color: #f8fafc;
-            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            background-color: var(--color-bg);
+            border-radius: var(--radius-control);
             padding: 10px;
             max-height: 250px;
             overflow-y: auto;
@@ -87,7 +54,7 @@
 
         .empty-pool-msg {
             text-align: center;
-            color: #94a3b8;
+            color: var(--color-text-muted);
             font-size: 0.9rem;
             padding: 20px;
             font-style: italic;
@@ -103,102 +70,58 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
+            background: var(--color-bg-panel);
             padding: 8px 12px;
             margin-bottom: 8px;
-            border-radius: 4px;
-            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-control);
+            border: 1px solid var(--color-border);
             font-size: 0.9rem;
             animation: fadeIn 0.3s ease;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .file-name {
-            font-family: monospace;
+            font-family: var(--font-mono);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             margin-right: 10px;
-        }
-
-        .remove-btn {
-            background: transparent;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            flex-shrink: 0; /* Prevents button from squishing */
-        }
-
-        .remove-btn:hover {
-            background: var(--danger-color);
-            color: white;
-        }
-        /* -------------------------- */
-
-        .main-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.2s;
-        }
-
-        .main-btn:hover {
-            background-color: #1d4ed8;
-        }
-
-        .main-btn:disabled {
-            background-color: #94a3b8;
-            cursor: not-allowed;
+            color: var(--color-text);
         }
 
         #result-area {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px dashed var(--border-color);
+            border-top: 1px dashed var(--color-border);
             display: none;
         }
 
         .success-box {
-            background-color: #ecfdf5;
-            color: #065f46;
+            background-color: var(--color-bg-active);
+            color: var(--color-success);
             padding: 15px;
-            border-radius: 6px;
+            border-radius: var(--radius-control);
             margin-bottom: 15px;
             text-align: center;
+            border: 1px solid var(--color-success);
         }
 
         .preview-box {
-            background: #1e293b;
-            color: #e2e8f0;
+            background: var(--color-bg);
+            color: var(--color-text);
             padding: 15px;
-            border-radius: 6px;
+            border-radius: var(--radius-control);
+            border: 1px solid var(--color-border);
             height: 150px;
             overflow-y: auto;
-            font-family: monospace;
+            font-family: var(--font-mono);
             white-space: pre-wrap;
             margin-bottom: 15px;
             font-size: 0.85rem;
-        }
-
-        .btn-download {
-            background-color: #059669;
-        }
-        
-        .btn-download:hover {
-            background-color: #047857;
         }
     </style>
 </head>
@@ -208,13 +131,13 @@
         <h1>Markdown Merger</h1>
 
         <div class="input-group">
-            <label for="fileInput">1. Add Files to Pool</label>
-            <input type="file" id="fileInput" multiple accept=".md,.txt,.markdown">
-            <div class="helper-text">Select files. You can do this multiple times to add more.</div>
+            <label class="label" for="fileInput">1. Add Files to Pool</label>
+            <input class="input" type="file" id="fileInput" multiple accept=".md,.txt,.markdown">
+            <p class="field-message">Select files. You can do this multiple times to add more.</p>
         </div>
 
         <div class="input-group">
-            <label>Current File Pool (<span id="fileCount">0</span>)</label>
+            <label class="label">Current File Pool (<span id="fileCount">0</span>)</label>
             <div class="file-pool-container">
                 <div id="emptyMsg" class="empty-pool-msg">No files added yet.</div>
                 <ul id="fileList" class="file-list"></ul>
@@ -222,22 +145,22 @@
         </div>
 
         <div class="input-group">
-            <label for="separatorInput">2. Separator</label>
-            <input type="text" id="separatorInput" value="-----" placeholder="e.g. ----- or ***">
-            <div class="helper-text">Inserted between files.</div>
+            <label class="label" for="separatorInput">2. Separator</label>
+            <input class="input" type="text" id="separatorInput" value="-----" placeholder="e.g. ----- or ***">
+            <p class="field-message">Inserted between files.</p>
         </div>
 
-        <button id="mergeBtn" class="main-btn">Merge Files in Pool</button>
+        <button id="mergeBtn" class="btn" style="width:100%;">Merge Files in Pool</button>
 
         <div id="result-area">
             <div class="success-box">
                 Files merged successfully!
             </div>
-            
-            <label>Preview (First 500 chars):</label>
+
+            <label class="label">Preview (First 500 chars):</label>
             <div class="preview-box" id="previewBox"></div>
 
-            <button id="downloadBtn" class="main-btn btn-download">Download Combined File</button>
+            <button id="downloadBtn" class="btn" style="width:100%; background: var(--color-success); border-color: var(--color-success);">Download Combined File</button>
         </div>
     </div>
 
@@ -294,7 +217,7 @@
                     nameSpan.textContent = `${index + 1}. ${file.name}`;
 
                     const removeBtn = document.createElement('button');
-                    removeBtn.className = 'remove-btn';
+                    removeBtn.className = 'btn btn--danger btn--sm';
                     removeBtn.innerHTML = 'Remove';
                     removeBtn.onclick = () => removeFile(index);
 

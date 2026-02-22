@@ -1,0 +1,69 @@
+/* =============================================================
+   shared/base.css — Reset, Element Defaults, Utilities
+   VSCode Dark Modern · Dev Tools Suite
+   ─────────────────────────────────────────────────────────────
+   Depends on shared/tokens.css being loaded first.
+   All colors, spacing, and radii use tokens from tokens.css.
+
+   Layer stack (declared here, governs all three shared files):
+     @layer reset, tokens, base, components, utilities, overrides;
+   ============================================================= */
+
+@layer reset, tokens, base, components, utilities, overrides;
+
+@layer base {
+
+  /* ── Box-sizing reset ───────────────────────────────────────── */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* ── Body defaults ──────────────────────────────────────────── */
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
+  }
+
+  /* ── Scrollbar ──────────────────────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-light);
+    background-clip: content-box;
+    border: 2px solid transparent;
+  }
+
+  /* ── Selection ──────────────────────────────────────────────── */
+  ::selection {
+    background: var(--color-bg-selection);
+    color: var(--color-text);
+  }
+
+  /* ── Focus ──────────────────────────────────────────────────── */
+  :focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+} /* end @layer base */

@@ -1,0 +1,267 @@
+/* =============================================================
+   shared/components.css — Shared UI Components
+   Dev Tools Suite · VSCode Dark Modern theme
+   ─────────────────────────────────────────────────────────────
+   Depends on shared/tokens.css + shared/base.css being loaded.
+   All colors use semantic tokens from tokens.css — no hardcoded hex.
+
+   Pre-approved component groups (6 total):
+     1. .btn + variants
+     2. .app-header
+     3. .upload-zone
+     4. Form inputs
+     5. .toast
+     6. Scrollbar (in base.css)
+   ============================================================= */
+
+@layer components {
+
+/* ============================================================
+   1. BUTTONS
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, opacity 0.1s;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: var(--color-accent-bg);
+  color: var(--color-text);
+  border-color: var(--color-accent-bg);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-bg-hover);
+  border-color: var(--color-accent-bg-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-light);
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+  border-color: var(--color-error);
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 85%, black);
+  border-color: color-mix(in srgb, var(--color-error) 85%, black);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: var(--color-bg);
+  border-color: var(--color-success);
+}
+.btn-success:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-success) 85%, black);
+  border-color: color-mix(in srgb, var(--color-success) 85%, black);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+
+/* ============================================================
+   2. APP HEADER
+   ============================================================ */
+
+.app-header {
+  height: 44px;
+  background: var(--color-bg-panel);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.app-header a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 12px;
+}
+.app-header a:hover {
+  color: var(--color-text);
+}
+
+
+/* ============================================================
+   3. UPLOAD ZONE
+   ============================================================ */
+
+.upload-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-control);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--color-text-secondary);
+  text-align: center;
+  width: 100%;
+}
+
+.upload-zone:hover {
+  border-color: var(--color-accent);
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.upload-zone.drag-active {
+  border-color: var(--color-accent);
+  background: var(--color-bg-active);
+  color: var(--color-text);
+}
+
+.upload-zone p {
+  margin: 0;
+}
+
+
+/* ============================================================
+   4. FORM INPUTS
+   ============================================================ */
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color 0.1s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-border-focus);
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+input[type="password"]::placeholder,
+input[type="email"]::placeholder,
+input[type="url"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+input[type="text"]:disabled,
+input[type="number"]:disabled,
+input[type="password"]:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23858585' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+
+/* ============================================================
+   5. TOAST
+   ============================================================ */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--color-bg-panel);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: var(--z-toast);
+  white-space: nowrap;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* ============================================================
+   6. Scrollbar — defined in base.css, not duplicated here
+   ============================================================ */
+
+} /* end @layer components */

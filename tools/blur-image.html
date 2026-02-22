@@ -4,22 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Blur Tool</title>
+    <meta name="color-scheme" content="dark">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../shared/tokens.css" />
+    <link rel="stylesheet" href="../shared/base.css" />
+    <link rel="stylesheet" href="../shared/components.css" />
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --border: #e2e8f0;
-            --text: #0f172a;
-            --text-light: #64748b;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,17 +26,16 @@
         }
 
         p.subtitle {
-            color: var(--text-light);
+            color: var(--color-text-secondary);
             margin-top: 0;
             margin-bottom: 24px;
         }
 
         /* Container */
         .app-container {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-control);
             padding: 24px;
             max-width: 1000px;
             width: 100%;
@@ -55,23 +47,22 @@
         /* Upload Area */
         .upload-zone {
             width: 100%;
-            border: 2px dashed var(--border);
-            border-radius: 8px;
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-control);
             padding: 40px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
-            background-color: #fcfcfc;
+            transition: border-color 0.15s, background 0.15s;
         }
 
         .upload-zone:hover {
-            border-color: var(--primary);
-            background-color: #eff6ff;
+            border-color: var(--color-accent);
+            background: var(--color-bg-hover);
         }
 
         .upload-zone p {
             margin: 0;
-            color: var(--text-light);
+            color: var(--color-text-secondary);
             font-weight: 500;
         }
 
@@ -92,8 +83,7 @@
             position: relative;
             max-width: 100%;
             overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--color-border);
             /* Cursor indicates painting */
             cursor: crosshair; 
         }
@@ -113,7 +103,7 @@
             justify-content: center;
             align-items: center;
             padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--color-border);
             margin-bottom: 10px;
         }
 
@@ -126,39 +116,41 @@
         label {
             font-size: 14px;
             font-weight: 500;
-            color: var(--text-light);
+            color: var(--color-text-secondary);
         }
 
         input[type="range"] {
-            accent-color: var(--primary);
+            accent-color: var(--color-accent);
             cursor: pointer;
         }
 
         /* Buttons */
         .btn {
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: var(--radius-control);
             font-weight: 500;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.1s;
+            transition: background 0.1s, border-color 0.1s;
         }
 
         .btn:hover {
-            background-color: #e2e8f0;
+            background: var(--color-bg-hover);
+            border-color: var(--color-border-light);
         }
 
         .btn-primary {
-            background-color: var(--primary);
+            background: var(--color-accent);
             color: white;
-            border: none;
+            border-color: var(--color-accent);
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-hover);
+            background: var(--color-accent-hover);
+            border-color: var(--color-accent-hover);
         }
 
         .action-row {
@@ -169,7 +161,7 @@
 
         /* Loading indicator */
         .loading {
-            color: var(--text-light);
+            color: var(--color-text-secondary);
             font-size: 14px;
             margin-top: 10px;
             display: none;
@@ -244,17 +236,17 @@
         
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.borderColor = 'var(--color-accent)';
         });
 
         dropZone.addEventListener('dragleave', (e) => {
             e.preventDefault();
-            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.borderColor = 'var(--color-border)';
         });
 
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.borderColor = 'var(--color-border)';
             if (e.dataTransfer.files.length) {
                 handleFile(e.dataTransfer.files[0]);
             }
